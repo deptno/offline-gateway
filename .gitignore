@@ -1,0 +1,4 @@
+.idea
+**/*.js
+dist
+node_modules
