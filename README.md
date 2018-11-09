@@ -98,6 +98,11 @@ X-Powered-By: Express
 [] 
 ```
 
+#### PORT
+
+```bash
+PORT=5945 ogw
+```
 #### DynamoDB local stream
 
 `touch ddb.region.port.tableName.js`

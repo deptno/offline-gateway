@@ -2,8 +2,6 @@ import {awsLambdaProxy} from '../interface/aws-lambda-proxy'
 import {watch} from '../watcher'
 
 export const registerMethods = (app, methods) => {
-  console.log(':: Routes Information')
-
   watch(
     methods,
     (method, path, handler) => {

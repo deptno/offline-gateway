@@ -4,7 +4,6 @@ import {watch} from '../watcher'
 import DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
 
 export const registerStreams = (interval, streams) => {
-  console.log(':: Listeners')
   const listeners: Map<string, StreamTuple> = new Map()
   const run = () => {
     for (const [key, {region, port, streams, handler}] of listeners) {
