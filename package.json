@@ -15,7 +15,8 @@
     "tsc": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.13",
