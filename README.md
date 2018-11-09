@@ -2,13 +2,15 @@
 
 ![demo](offline-gateway.gif)
 
-File based API gateway, especially `offline-gateway` DynamoDB local
+File based API gateway,  
+:tada: specially `offline-gateway` support **DynamoDB local stream**
+
 
 ```bash
 npm -g i offline-gateway
 ```
 
-### Usage
+## Usage
 
 Define API **TYPE** and **PATH** in filename.
 
@@ -98,12 +100,12 @@ X-Powered-By: Express
 [] 
 ```
 
-#### PORT
+### PORT
 
 ```bash
 PORT=5945 ogw
 ```
-#### DynamoDB local stream
+### DynamoDB local stream
 
 `touch ddb.region.port.tableName.js`
 
@@ -115,10 +117,13 @@ module.exports = (event) => {
 
 `offline-gateway` polling stream's(first shard, DynamoDB support only one stream) **first shard** by `1` second.
 
-### Features
+## Features
 
 - [x] Hot reloading
 - [x] DynamoDB local stream(limited, very initial version)
 
-### License
+## Link
+- [Dynamon - GUI DynamoDB local client](https://github.com/deptno/dynamon)
+
+## License
 MIT
