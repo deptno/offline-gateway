@@ -1,5 +1,7 @@
 # :mushroom: Callgate
 
+![demo](offline-gateway.gif)
+
 File based API gateway, especially `offline-gateway` DynamoDB local
 
 ```bash
