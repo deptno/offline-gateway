@@ -1,6 +1,6 @@
 {
   "name": "offline-gateway",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "description": "offline gateway, zero configuration, file based, supported dynamodb-local stream",
   "author": "Bonggyun Lee <deptno@gmail.com>",

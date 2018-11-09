@@ -1,4 +1,4 @@
-# :mushroom: Callgate
+# :mushroom: Offline gateway
 
 ![demo](offline-gateway.gif)
 
