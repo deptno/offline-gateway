@@ -12,7 +12,6 @@ export const registerStreams = (interval, streams) => {
       })
       getRecords(region, port, streams)
         .then(response => {
-          console.log('response', response)
           if (response) {
             if (response.Records) {
               if (response.Records.length > 0) {
