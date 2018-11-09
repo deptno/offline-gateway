@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000
   const streams = ['ddb']
 
   registerMethods(app, methods)
-  registerStreams(5000, streams)
+  registerStreams(1000, streams)
 
   app.listen(port, () => console.log(`:mushroom: offline-gateway Ready to work ${port}`))
 }()

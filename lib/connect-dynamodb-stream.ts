@@ -1,5 +1,4 @@
 import AWS from 'aws-sdk'
-import R from 'ramda'
 import DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
 
 const ddbStreams = {}
@@ -17,7 +16,7 @@ const getDdbStream = (region, port): AWS.DynamoDBStreams => {
   return ddbStreams[key] = new AWS.DynamoDBStreams(params)
 }
 
-export const searchStreams = async (region, port): Promise<DynamoDBStreams.Types.StreamDescription[]> => {
+export const getRecordBox = async (region, port, tableName): Promise<(() => Promise<any[]>) | undefined> => {
   console.log('Searching Table Streams')
   const ddbStreams = getDdbStream(region, port)
   const streams = await ddbStreams
@@ -25,50 +24,72 @@ export const searchStreams = async (region, port): Promise<DynamoDBStreams.Types
     .promise()
 
   if (!streams.Streams) {
-    return []
-  }
-
-  const descStreams = await Promise.all(
-    streams.Streams
-      .filter(stream => stream.StreamArn)
-      .map(stream => ddbStreams
-        .describeStream({StreamArn: stream.StreamArn!})
-        .promise()
-        .then(stream => stream.StreamDescription)
-        .catch(e => console.error(e))
-      )
-  )
-
-  return descStreams.filter(Boolean) as unknown as Promise<DynamoDBStreams.StreamDescription[]>
-}
-
-/**
- * @todo support only one shard now
- */
-export const getRecords = async (region, port, streams: DynamoDBStreams.StreamDescription[]) => {
-  const ddbStreams = getDdbStream(region, port)
-  const shards = streams[0].Shards
-  const arn = streams[0].StreamArn!
-
-  if (!shards || shards.length === 0) {
     return
   }
 
-  const iter = await ddbStreams
+  const stream = streams.Streams.filter(stream => stream.StreamArn && stream.TableName === tableName)[0]
+
+  if (!stream || !stream.StreamArn) {
+    return
+  }
+
+  const description = await ddbStreams
+    .describeStream({StreamArn: stream.StreamArn})
+    .promise()
+
+  if (!description) {
+    return
+  }
+
+  if (!description.StreamDescription) {
+    return
+  }
+
+  const {Shards, StreamArn} = description.StreamDescription
+
+  if (!Shards) {
+    return
+  }
+  if (Shards.length === 0) {
+    return
+  }
+  if (!StreamArn) {
+    return
+  }
+  const shard = Shards[0]
+  const {ShardId, ParentShardId, SequenceNumberRange} = shard
+
+  if (!ShardId) {
+    return
+  }
+
+  const {ShardIterator} = await ddbStreams
     .getShardIterator({
-      ShardId: shards[0].ShardId!,
-      StreamArn: arn,
+      StreamArn,
+      ShardId          : ShardId,
       ShardIteratorType: 'LATEST'
     })
     .promise()
 
-  if (!iter || !iter.ShardIterator) {
+  if (!ShardIterator) {
     return
   }
-  const {ShardIterator} = iter
-  const records = await ddbStreams
-    .getRecords({ShardIterator})
-    .promise()
 
-  return records
+  return createRecordsGetter(ddbStreams, ShardIterator)
+}
+
+const createRecordsGetter = (ddbStreams, firstIter) => {
+  let iter = firstIter
+  return async () => {
+    if (!iter) {
+      throw new Error('Undefined iter')
+    }
+    const {Records, NextShardIterator} = await ddbStreams
+      .getRecords({
+        ShardIterator: iter
+      })
+      .promise()
+    iter = NextShardIterator
+    return Records
+  }
 }

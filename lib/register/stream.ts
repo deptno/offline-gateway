@@ -1,47 +1,46 @@
-import {getRecords, searchStreams} from '../connect-dynamodb-stream'
+import {getRecordBox} from '../connect-dynamodb-stream'
 import {awsLambdaDynamoDbStream} from '../interface/aws-lambda-stream'
 import {watch} from '../watcher'
-import DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
 
-export const registerStreams = (interval, streams) => {
+export const registerStreams = (interval, methods) => {
   const listeners: Map<string, StreamTuple> = new Map()
   const run = () => {
-    for (const [key, {region, port, streams, handler}] of listeners) {
-      streams.map(stream => {
-        stream.Shards
-      })
-      getRecords(region, port, streams)
-        .then(response => {
-          if (response) {
-            if (response.Records) {
-              if (response.Records.length > 0) {
-                awsLambdaDynamoDbStream(handler, response)
-              }
-            }
+    for (const [key, {recordBox, handler}] of listeners) {
+      recordBox()
+        .then(records => {
+          if (!records) {
+            return
           }
+          if (records.length === 0) {
+            return
+          }
+          awsLambdaDynamoDbStream(handler, records)
         })
     }
   }
 
-  watch(streams, async (method, path, handler) => {
+  watch(methods, async (method, path, handler) => {
     const [region, port, tableName] = path
       .slice(1)
       .split('/')
     if (!(region && port && tableName)) {
-      console.log(`⛑ ️${method.toUpperCase()}\t${path}, filename requires \`ddb.region.port.tablename.js\` format`)
+      console.log(`⛑ ️${method.toUpperCase()}\t${path}, Filename requires \`ddb.region.port.tablename.js\` format`)
       return
     }
     if (typeof handler !== 'function') {
-      console.log(`⛑ ️${method.toUpperCase()}\t${path}, invalid function`)
+      console.log(`⛑ ️${method.toUpperCase()}\t${path}, Invalid function`)
     }
     const key = [method, path].join('#')
-    const streams = await searchStreams(region, port)
-    listeners.set(key, {
-      region,
-      port,
-      streams,
-      handler
-    })
+    const recordBox = await getRecordBox(region, port, tableName)
+
+    if (!recordBox) {
+      console.log(`⛑ ️${method.toUpperCase()}\t${path}, Can't find shard, this stream will be ignored.`)
+      return
+    }
+
+    listeners.set(key, {recordBox, handler})
+
+    console.log('watch result', methods)
     console.log(`< ⛵️${method.toUpperCase()}\t${path}`)
   })
 
@@ -49,8 +48,6 @@ export const registerStreams = (interval, streams) => {
 }
 
 interface StreamTuple {
-  region: string
-  port: string
-  streams: DynamoDBStreams.Types.StreamDescription[]
+  recordBox: () => Promise<any[]>
   handler(): void
 }

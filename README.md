@@ -107,7 +107,13 @@ PORT=5945 ogw
 
 `touch ddb.region.port.tableName.js`
 
-offline-gateway 
+```javascript
+module.exports = (event) => {
+  console.log('records', event)
+}
+```
+
+`offline-gateway` polling stream's(first shard, DynamoDB support only one stream) **first shard** by `1` second.
 
 ### Features
 
