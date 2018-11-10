@@ -1,7 +1,8 @@
 {
   "name": "offline-gateway",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "dist/index.js",
+  "repository": "https://github.com/deptno/dynamon.git",
   "description": "offline gateway, zero configuration, file based, supported dynamodb-local stream",
   "author": "Bonggyun Lee <deptno@gmail.com>",
   "license": "MIT",

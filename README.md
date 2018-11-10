@@ -1,6 +1,6 @@
 # :mushroom: Offline gateway
 
-![demo](offline-gateway.gif)
+![demo](https://github.com/deptno/offline-gateway/blob/master/offline-gateway.gif?raw=true)
 
 File based API gateway,  
 :tada: specially `offline-gateway` support **DynamoDB local stream**
