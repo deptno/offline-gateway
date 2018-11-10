@@ -1,5 +1,7 @@
 import AWS from 'aws-sdk'
-import DynamoDBStreams = require('aws-sdk/clients/dynamodbstreams')
+import debug from 'debug'
+
+const log = debug('ogw:ddb')
 
 const ddbStreams = {}
 const getDdbStream = (region, port): AWS.DynamoDBStreams => {
@@ -12,12 +14,12 @@ const getDdbStream = (region, port): AWS.DynamoDBStreams => {
     region,
     endpoint: `http://localhost:${port}`,
   }
-  console.log('ddb params', params)
+  log('ddb params', params)
   return ddbStreams[key] = new AWS.DynamoDBStreams(params)
 }
 
 export const getRecordBox = async (region, port, tableName): Promise<(() => Promise<any[]>) | undefined> => {
-  console.log('Searching Table Streams')
+  log('Searching Table Streams')
   const ddbStreams = getDdbStream(region, port)
   const streams = await ddbStreams
     .listStreams()
@@ -27,7 +29,10 @@ export const getRecordBox = async (region, port, tableName): Promise<(() => Prom
     return
   }
 
-  const stream = streams.Streams.filter(stream => stream.StreamArn && stream.TableName === tableName)[0]
+  const tableStreams = streams.Streams.filter(stream => stream.StreamArn && stream.TableName === tableName)
+  const stream = tableStreams[0]
+  log('tableStreams', tableStreams)
+  log('stream', stream)
 
   if (!stream || !stream.StreamArn) {
     return
@@ -40,6 +45,7 @@ export const getRecordBox = async (region, port, tableName): Promise<(() => Prom
   if (!description) {
     return
   }
+  log('description', description)
 
   if (!description.StreamDescription) {
     return
@@ -56,7 +62,16 @@ export const getRecordBox = async (region, port, tableName): Promise<(() => Prom
   if (!StreamArn) {
     return
   }
-  const shard = Shards[0]
+  const [shard] = Shards.filter(shard => {
+    if (!shard) {
+      return false
+    }
+    if (!shard.SequenceNumberRange) {
+      return false
+    }
+    return !shard.SequenceNumberRange.EndingSequenceNumber
+  })
+
   const {ShardId, ParentShardId, SequenceNumberRange} = shard
 
   if (!ShardId) {
@@ -82,7 +97,8 @@ const createRecordsGetter = (ddbStreams, firstIter) => {
   let iter = firstIter
   return async () => {
     if (!iter) {
-      throw new Error('Undefined iter')
+      log('ShardIterator', iter)
+      return []
     }
     const {Records, NextShardIterator} = await ddbStreams
       .getRecords({
@@ -90,6 +106,7 @@ const createRecordsGetter = (ddbStreams, firstIter) => {
       })
       .promise()
     iter = NextShardIterator
+    log('ShardIterator', iter)
     return Records
   }
 }
