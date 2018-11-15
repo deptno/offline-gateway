@@ -1,6 +1,7 @@
 import {Express} from 'express'
 import R from 'ramda'
 import remove from 'express-unset-route'
+import {getMethodAndUri} from './get-method-and-uri'
 import {toUpperDupe} from './to-upper-dupe'
 import createWatcher from 'glob-watcher'
 import glob from 'fast-glob'
@@ -22,8 +23,7 @@ export const watch: Watch = async (prefixes, bus, app?) => {
 
   watcher.on('add', onAdd)
   watcher.on('change', (route, stat) => {
-    const [method, ...paths] = route.split('.')
-    const path = '/' + paths.slice(0, -1).join('/')
+    const [method, path] = getMethodAndUri(route)
     const module = resolve(route)
 
     delete require.cache[module]
